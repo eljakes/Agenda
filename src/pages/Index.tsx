@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, createContext, useContext } from "react";
 import { Layout } from "@/components/layout/Layout";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
@@ -9,6 +9,14 @@ const mockUsers = {
   'parent@email.com': { name: 'John Parent', role: 'parent' as const },
   'admin@school.edu': { name: 'Admin User', role: 'admin' as const },
 };
+
+// User context for sharing across the app
+export const UserContext = createContext<{ 
+  user: { name: string; role: 'teacher' | 'parent' | 'admin'; email: string } | null;
+  setUser: (user: { name: string; role: 'teacher' | 'parent' | 'admin'; email: string } | null) => void;
+}>({ user: null, setUser: () => {} });
+
+export const useUser = () => useContext(UserContext);
 
 const Index = () => {
   const [user, setUser] = useState<{ name: string; role: 'teacher' | 'parent' | 'admin'; email: string } | null>(null);
@@ -30,13 +38,19 @@ const Index = () => {
   };
 
   if (!user) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <UserContext.Provider value={{ user, setUser }}>
+        <Login onLogin={handleLogin} />
+      </UserContext.Provider>
+    );
   }
 
   return (
-    <Layout userName={user.name} userRole={user.role} onLogout={handleLogout}>
-      <Dashboard userName={user.name} userRole={user.role} />
-    </Layout>
+    <UserContext.Provider value={{ user, setUser }}>
+      <Layout userName={user.name} userRole={user.role} onLogout={handleLogout}>
+        <Dashboard userName={user.name} userRole={user.role} />
+      </Layout>
+    </UserContext.Provider>
   );
 };
 
